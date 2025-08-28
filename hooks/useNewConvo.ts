@@ -72,15 +72,12 @@ const useNewConvo = (index = 0) => {
         keepAddedConvos?: boolean,
         disableFocus?: boolean,
         _disableParams?: boolean,
+        disableNavigation?: boolean, // 新增：是否禁用导航
       ) => {
         const modelsConfig = modelsData ?? modelsQuery.data;
         const { endpoint = null } = conversation;
         const buildDefaultConversation = (endpoint === null || buildDefault) ?? false;
         const activePreset =
-          // use default preset only when it's defined,
-          // preset is not provided,
-          // endpoint matches or is null (to allow endpoint change),
-          // and buildDefaultConversation is true
           defaultPreset &&
           !preset &&
           (defaultPreset.endpoint === endpoint || !endpoint) &&
@@ -185,24 +182,24 @@ const useNewConvo = (index = 0) => {
           return;
         }
 
-        const searchParamsString = searchParams?.toString();
-        const getParams = () => (searchParamsString ? `?${searchParamsString}` : '');
+        // 仅在不禁用导航时执行路由跳转
+        if (!disableNavigation) {
+          const searchParamsString = searchParams?.toString();
+          const getParams = () => (searchParamsString ? `?${searchParamsString}` : '');
 
-        if (conversation.conversationId === Constants.NEW_CONVO && !modelsData) {
-          const appTitle = localStorage.getItem(LocalStorageKeys.APP_TITLE) ?? '';
-          // if (appTitle) {
-          //   document.title = appTitle;
-          // }
-          const path = `/c/${Constants.NEW_CONVO}${getParams()}`;
-          navigate(path, { state: { focusChat: true } });
-          return;
+          if (conversation.conversationId === Constants.NEW_CONVO && !modelsData) {
+            const appTitle = localStorage.getItem(LocalStorageKeys.APP_TITLE) ?? '';
+            const path = `/c/${Constants.NEW_CONVO}${getParams()}`;
+            navigate(path, { state: { focusChat: true } });
+            return;
+          }
+
+          const path = `/c/${conversation.conversationId}${getParams()}`;
+          navigate(path, {
+            replace: true,
+            state: disableFocus ? {} : { focusChat: true },
+          });
         }
-
-        const path = `/c/${conversation.conversationId}${getParams()}`;
-        navigate(path, {
-          replace: true,
-          state: disableFocus ? {} : { focusChat: true },
-        });
       },
     [endpointsConfig, defaultPreset, assistantsListMap, modelsQuery.data],
   );
@@ -217,6 +214,7 @@ const useNewConvo = (index = 0) => {
       keepLatestMessage = false,
       keepAddedConvos = false,
       disableParams,
+      disableNavigation = false, // 新增：是否禁用导航（默认false）
     }: {
       template?: Partial<TConversation>;
       preset?: Partial<TPreset>;
@@ -226,6 +224,7 @@ const useNewConvo = (index = 0) => {
       keepLatestMessage?: boolean;
       keepAddedConvos?: boolean;
       disableParams?: boolean;
+      disableNavigation?: boolean; // 新增参数定义
     } = {}) {
       pauseGlobalAudio();
       if (!saveBadgesState) {
@@ -276,7 +275,7 @@ const useNewConvo = (index = 0) => {
             file_id: file.file_id,
             embedded: !!(file.embedded ?? false),
             filepath: file.filepath as string,
-            source: file.source as FileSources, // Ensure that the source is of type FileSources
+            source: file.source as FileSources,
           }));
 
         setFiles(new Map());
@@ -296,6 +295,7 @@ const useNewConvo = (index = 0) => {
         keepAddedConvos,
         disableFocus,
         disableParams,
+        disableNavigation, // 传递禁用导航参数
       );
     },
     [
