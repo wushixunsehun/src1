@@ -1,63 +1,10 @@
-// import { Outlet, useLocation, useOutletContext } from 'react-router-dom';
-// import { useState, useEffect } from 'react';
-// import Sidebar from './Sidebar';
-// import AccountSettings from '~/components/Nav/AccountSettings';
-// import { cn } from '~/utils';
-
-// // 定义上下文类型
-// type SystemLayoutContext = {
-//   navVisible: boolean;
-//   setNavVisible: (visible: boolean) => void;
-// };
-
-// export default function SystemLayout() {
-//   const location = useLocation();
-//   const isNewChatPage = location.pathname === '/system/new-chat';
-  
-//   // 初始化侧边栏状态：在新建聊天页面默认隐藏
-//   const [navVisible, setNavVisible] = useState(!isNewChatPage);
-
-//   // 当路由变化时更新侧边栏状态
-//   useEffect(() => {
-//     setNavVisible(!(location.pathname === '/system/new-chat'));
-//   }, [location.pathname]);
-
-//   return (
-//     <div className="flex h-screen overflow-hidden relative">
-//       {/* 仅在非新建聊天页面显示侧边栏 */}
-//       {navVisible && <Sidebar />}
-      
-//       {/* 主内容区域 - 根据侧边栏状态调整布局 */}
-//       <main className={cn(
-//         "flex-1 overflow-auto bg-background",
-//         navVisible ? "p-6 ml-[var(--sidebar-width)]" : "p-6 ml-0"
-//       )}>
-//         {/* 向子组件传递上下文 */}
-//         <Outlet context={{ navVisible, setNavVisible } as SystemLayoutContext} />
-//       </main>
-      
-//       {/* 左下角用户信息按钮 - 在新建聊天页面隐藏 */}
-//       {!isNewChatPage && (
-//         <div className="fixed bottom-4 left-4 z-10 md:bottom-6 md:left-6">
-//           <AccountSettings />
-//         </div>
-//       )}
-//     </div>
-//   );
-// }
-
-// // 提供类型安全的上下文钩子
-// export function useSystemLayoutContext() {
-//   return useOutletContext<SystemLayoutContext>();
-// }
-
-
 import { Outlet, useLocation, useOutletContext } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import Sidebar from './Sidebar';
-import AccountSettings from 'client/src/components/Nav/AccountSettings';
-import { cn } from 'client/src/utils';
-import { useAuthContext } from 'client/src/hooks/AuthContext';
+import AccountSettings from '~/components/Nav/AccountSettings';
+import { cn } from '~/utils';
+import { useLocalize } from '~/hooks';
+import { useAuthContext } from '~/hooks/AuthContext';
 import { Navigate } from 'react-router-dom';
 
 // 定义上下文类型
