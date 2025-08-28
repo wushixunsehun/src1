@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import ChatView from '../Chat/ChatView';
-import { useNewConvo } from 'client/src/hooks'; 
+import { useNewConvo } from '~/hooks';
 
 const SystemNewChat = () => {
     const { newConversation: newConvo } = useNewConvo(); 
@@ -11,8 +11,7 @@ const SystemNewChat = () => {
     }, [newConvo]);
 
     return (
-    <div className="h-full">
-        <ChatView />
+    <div className="新建聊天">
     </div>
     );
 };
