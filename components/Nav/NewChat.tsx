@@ -1,4 +1,3 @@
-
 import React, { useCallback, useState } from 'react';
 import { useRecoilValue } from 'recoil';
 import { useNavigate, Link } from 'react-router-dom';
@@ -56,7 +55,7 @@ export default function NewChat({
     <>
       {/* 核心功能区：所有同级按钮+运维服务子级 */}
       <div className="mb-4 border-b border-border-light pb-3">
-        {/* 1. 关闭侧边栏按钮（独立功能，不参与系统功能同级） */}
+        {/* 1. 关闭侧边栏按钮 */}
         <div className="mb-3">
           <TooltipAnchor
             description={localize('com_nav_close_sidebar')}
@@ -68,15 +67,13 @@ export default function NewChat({
                 className="w-full justify-start border-none bg-transparent hover:bg-surface-hover"
                 onClick={toggleNav}
               >
-                <Sidebar className="max-md:hidden mr-2" />
+                <Sidebar className="max-md:hidden mr-2" size={20} />
                 <MobileSidebar className="m-1 inline-flex size-10 items-center justify-center md:hidden mr-2" />
-                <span className="text-sm">{localize('com_nav_close_sidebar')}</span>
               </Button>
             }
           />
         </div>
 
-        {/* 2. 同级系统功能按钮（共5个，运维服务在最后） */}
         {/* 2.1 系统首页 */}
         <div className="mb-2">
           <TooltipAnchor
@@ -84,12 +81,12 @@ export default function NewChat({
             render={
               <Button
                 variant="outline"
-                className="w-full justify-start border-none bg-transparent hover:bg-surface-hover"
+                className="w-full justify-start border-none bg-transparent hover:bg-surface-hover py-3"
                 onClick={() => isSmallScreen && toggleNav()}
               >
                 <Link to="/system" className="flex items-center w-full no-underline text-text-primary">
-                  <Home size={16} className="mr-2" />
-                  <span className="text-sm">{localize('com_system_home')}</span>
+                  <Home size={20} className="mr-3" />
+                  <span className="text-base font-bold">{localize('com_system_home')}</span>
                 </Link>
               </Button>
             }
@@ -103,12 +100,12 @@ export default function NewChat({
             render={
               <Button
                 variant="outline"
-                className="w-full justify-start border-none bg-transparent hover:bg-surface-hover"
+                className="w-full justify-start border-none bg-transparent hover:bg-surface-hover py-3"
                 onClick={() => isSmallScreen && toggleNav()}
               >
                 <Link to="/system/cooling-system" className="flex items-center w-full no-underline text-text-primary">
-                  <Snowflake size={16} className="mr-2" />
-                  <span className="text-sm">{localize('com_system_cooling')}</span>
+                  <Snowflake size={20} className="mr-3" />
+                  <span className="text-base font-bold">{localize('com_system_cooling')}</span>
                 </Link>
               </Button>
             }
@@ -122,12 +119,12 @@ export default function NewChat({
             render={
               <Button
                 variant="outline"
-                className="w-full justify-start border-none bg-transparent hover:bg-surface-hover"
+                className="w-full justify-start border-none bg-transparent hover:bg-surface-hover py-3"
                 onClick={() => isSmallScreen && toggleNav()}
               >
                 <Link to="/system/root-cause" className="flex items-center w-full no-underline text-text-primary">
-                  <Search size={16} className="mr-2" />
-                  <span className="text-sm">{localize('com_system_root_cause')}</span>
+                  <Search size={20} className="mr-3" />
+                  <span className="text-base font-bold">{localize('com_system_root_cause')}</span>
                 </Link>
               </Button>
             }
@@ -141,45 +138,46 @@ export default function NewChat({
             render={
               <Button
                 variant="outline"
-                className="w-full justify-start border-none bg-transparent hover:bg-surface-hover"
+                className="w-full justify-start border-none bg-transparent hover:bg-surface-hover py-3"
                 onClick={() => isSmallScreen && toggleNav()}
               >
                 <Link to="/system/job-query" className="flex items-center w-full no-underline text-text-primary">
-                  <List size={16} className="mr-2" />
-                  <span className="text-sm">{localize('com_system_job_query')}</span>
+                  <List size={20} className="mr-3" />
+                  <span className="text-base font-bold">{localize('com_system_job_query')}</span>
                 </Link>
               </Button>
             }
           />
         </div>
 
-        {/* 2.5 运维服务（同级最后一个，带展开/折叠） */}
+        {/* 2.5 运维服务 */}
         <div className="mb-2">
           <TooltipAnchor
             description={localize('com_system_operation')}
             render={
               <Button
                 variant="outline"
-                className="w-full justify-start border-none bg-transparent hover:bg-surface-hover"
-                onClick={() => setIsOperationOpen(!isOperationOpen)} // 切换子级显示状态
+                className="w-full justify-start border-none bg-transparent hover:bg-surface-hover py-3"
+                onClick={() => setIsOperationOpen(!isOperationOpen)}
               >
-                <div className="flex items-center w-full">
-                  {/* 展开/折叠标识（用文字替代图标，避免依赖问题） */}
-                  <span className="mr-2 text-sm">
+                <div className="flex items-center justify-between w-full">
+                  <div className="flex items-center">
+                    <Server size={20} className="mr-3" />
+                    <span className="text-base font-bold">{localize('com_system_operation')}</span>
+                  </div>
+                  <span className="text-base">
                     {isOperationOpen ? '▼' : '▶'}
                   </span>
-                  <Server size={16} className="mr-2" />
-                  <span className="text-sm">{localize('com_system_operation')}</span>
                 </div>
               </Button>
             }
           />
         </div>
 
-        {/* 3. 运维服务子级（下一级：创建新聊天 + 历史会话区域） */}
+        {/* 3. 运维服务子级 */}
         {isOperationOpen && (
-          <div className="ml-6 space-y-3 mt-1">
-            {/* 3.1 创建新聊天（运维服务子级1） */}
+          <div className="space-y-3 mt-1"> {/* 移除 ml-6 取消缩进 */}
+            {/* 3.1 创建新聊天 */}
             <TooltipAnchor
               description={localize('com_ui_new_chat')}
               render={
@@ -187,24 +185,14 @@ export default function NewChat({
                   variant="outline"
                   data-testid="nav-new-chat-button"
                   aria-label={localize('com_ui_new_chat')}
-                  className="w-full justify-start border-none bg-transparent hover:bg-surface-hover"
+                  className="w-full justify-start border-none bg-transparent hover:bg-surface-hover py-2" 
                   onClick={clickHandler}
                 >
-                  <NewChatIcon className="icon-lg text-text-primary mr-2" />
-                  <span className="text-sm">{localize('com_ui_new_chat')}</span>
+                  <NewChatIcon className="icon-lg text-text-primary mr-2" size={16} />
+                  <span className="text-sm">{localize('com_ui_new_chat')}</span> 
                 </Button>
               }
             />
-
-            {/* 3.2 原本的历史会话区域（运维服务子级2） */}
-            <div className="pt-2 border-t border-border-light">
-              {/* 历史会话标题（可选，增强视觉区分） */}
-              <div className="mb-2 text-xs text-text-secondary">
-                {localize('com_history_conversations') || '历史会话'}
-              </div>
-              {/* 原有历史会话内容（subHeaders 传入的内容） */}
-              {subHeaders != null ? subHeaders : null}
-            </div>
           </div>
         )}
       </div>
