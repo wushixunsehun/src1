@@ -1,50 +1,17 @@
-import { useMemo, memo, type FC, useCallback } from 'react';
+import { useMemo, memo, useCallback } from 'react';
 import throttle from 'lodash/throttle';
-import { parseISO, isToday } from 'date-fns';
 import { List, AutoSizer, CellMeasurer, CellMeasurerCache } from 'react-virtualized';
-import { useLocalize, TranslationKeys, useMediaQuery } from '~/hooks';
+import { useLocalize, useMediaQuery } from '~/hooks';
 import { TConversation } from 'librechat-data-provider';
-import { groupConversationsByDate } from '~/utils';
 import { Spinner } from '~/components/svg';
 import Convo from './Convo';
 
-interface ConversationsProps {
-  conversations: Array<TConversation | null>;
-  moveToTop: () => void;
-  toggleNav: () => void;
-  containerRef: React.RefObject<HTMLDivElement | List>;
-  loadMoreConversations: () => void;
-  isLoading: boolean;
-  isSearchLoading: boolean;
-}
-
-const LoadingSpinner = memo(() => {
-  const localize = useLocalize();
-
-  return (
-    <div className="mx-auto mt-2 flex items-center justify-center gap-2">
-      <Spinner className="text-text-primary" />
-      <span className="animate-pulse text-text-primary">{localize('com_ui_loading')}</span>
-    </div>
-  );
-});
-
-const DateLabel: FC<{ groupName: string }> = memo(({ groupName }) => {
-  const localize = useLocalize();
-  return (
-    <div className="mt-2 pl-2 pt-1 text-text-secondary" style={{ fontSize: '0.7rem' }}>
-      {localize(groupName as TranslationKeys) || groupName}
-    </div>
-  );
-});
-
-DateLabel.displayName = 'DateLabel';
-
+// 定义列表项类型（仅保留会话和加载状态，移除header）
 type FlattenedItem =
-  | { type: 'header'; groupName: string }
   | { type: 'convo'; convo: TConversation }
   | { type: 'loading' };
 
+// 记忆化处理的会话组件
 const MemoizedConvo = memo(
   ({
     conversation,
@@ -56,27 +23,21 @@ const MemoizedConvo = memo(
     retainView: () => void;
     toggleNav: () => void;
     isLatestConvo: boolean;
-  }) => {
-    return (
-      <Convo
-        conversation={conversation}
-        retainView={retainView}
-        toggleNav={toggleNav}
-        isLatestConvo={isLatestConvo}
-      />
-    );
-  },
-  (prevProps, nextProps) => {
-    return (
-      prevProps.conversation.conversationId === nextProps.conversation.conversationId &&
-      prevProps.conversation.title === nextProps.conversation.title &&
-      prevProps.isLatestConvo === nextProps.isLatestConvo &&
-      prevProps.conversation.endpoint === nextProps.conversation.endpoint
-    );
-  },
+  }) => (
+    <Convo
+      conversation={conversation}
+      retainView={retainView}
+      toggleNav={toggleNav}
+      isLatestConvo={isLatestConvo}
+    />
+  ),
+  (prevProps, nextProps) => (
+    prevProps.conversation.conversationId === nextProps.conversation.conversationId &&
+    prevProps.isLatestConvo === nextProps.isLatestConvo
+  )
 );
 
-const Conversations: FC<ConversationsProps> = ({
+export const Conversations = memo(({
   conversations: rawConversations,
   moveToTop,
   toggleNav,
@@ -84,40 +45,40 @@ const Conversations: FC<ConversationsProps> = ({
   loadMoreConversations,
   isLoading,
   isSearchLoading,
+}: {
+  conversations: Array<TConversation | null>;
+  moveToTop: () => void;
+  toggleNav: () => void;
+  containerRef: React.RefObject<HTMLDivElement | List>;
+  loadMoreConversations: () => void;
+  isLoading: boolean;
+  isSearchLoading: boolean;
 }) => {
   const isSmallScreen = useMediaQuery('(max-width: 768px)');
   const convoHeight = isSmallScreen ? 44 : 34;
 
+  // 过滤有效会话（去除null值）
   const filteredConversations = useMemo(
     () => rawConversations.filter(Boolean) as TConversation[],
-    [rawConversations],
+    [rawConversations]
   );
 
-  const groupedConversations = useMemo(
-    () => groupConversationsByDate(filteredConversations),
-    [filteredConversations],
-  );
-
-  const firstTodayConvoId = useMemo(
-    () =>
-      filteredConversations.find((convo) => convo.updatedAt && isToday(parseISO(convo.updatedAt)))
-        ?.conversationId ?? undefined,
-    [filteredConversations],
-  );
-
+  // 生成扁平化列表（直接添加所有会话，无时间分组）
   const flattenedItems = useMemo(() => {
     const items: FlattenedItem[] = [];
-    groupedConversations.forEach(([groupName, convos]) => {
-      items.push({ type: 'header', groupName });
-      items.push(...convos.map((convo) => ({ type: 'convo' as const, convo })));
-    });
-
+    // 直接推送所有会话，不分组
+    items.push(...filteredConversations.map(convo => ({ 
+      type: 'convo' as const, 
+      convo 
+    })));
+    // 添加加载状态项（如果需要）
     if (isLoading) {
-      items.push({ type: 'loading' } as any);
+      items.push({ type: 'loading' as const });
     }
     return items;
-  }, [groupedConversations, isLoading]);
+  }, [filteredConversations, isLoading]);
 
+  // 列表项高度缓存配置
   const cache = useMemo(
     () =>
       new CellMeasurerCache({
@@ -125,9 +86,6 @@ const Conversations: FC<ConversationsProps> = ({
         defaultHeight: convoHeight,
         keyMapper: (index) => {
           const item = flattenedItems[index];
-          if (item.type === 'header') {
-            return `header-${index}`;
-          }
           if (item.type === 'convo') {
             return `convo-${item.convo.conversationId}`;
           }
@@ -137,9 +95,10 @@ const Conversations: FC<ConversationsProps> = ({
           return `unknown-${index}`;
         },
       }),
-    [flattenedItems, convoHeight],
+    [flattenedItems, convoHeight]
   );
 
+  // 渲染列表项（仅处理会话和加载状态）
   const rowRenderer = useCallback(
     ({ index, key, parent, style }) => {
       const item = flattenedItems[index];
@@ -148,7 +107,10 @@ const Conversations: FC<ConversationsProps> = ({
           <CellMeasurer cache={cache} columnIndex={0} key={key} parent={parent} rowIndex={index}>
             {({ registerChild }) => (
               <div ref={registerChild} style={style}>
-                <LoadingSpinner />
+                <div className="flex items-center justify-center p-2">
+                  <Spinner className="text-text-primary" size={16} />
+                  <span className="ml-2 text-sm text-text-primary">加载中...</span>
+                </div>
               </div>
             )}
           </CellMeasurer>
@@ -158,76 +120,60 @@ const Conversations: FC<ConversationsProps> = ({
         <CellMeasurer cache={cache} columnIndex={0} key={key} parent={parent} rowIndex={index}>
           {({ registerChild }) => (
             <div ref={registerChild} style={style}>
-              {item.type === 'header' ? (
-                <DateLabel groupName={item.groupName} />
-              ) : item.type === 'convo' ? (
+              {item.type === 'convo' && (
                 <MemoizedConvo
                   conversation={item.convo}
                   retainView={moveToTop}
                   toggleNav={toggleNav}
-                  isLatestConvo={item.convo.conversationId === firstTodayConvoId}
+                  isLatestConvo={index === 0} // 第一个会话视为最新
                 />
-              ) : null}
+              )}
             </div>
           )}
         </CellMeasurer>
       );
     },
-    [cache, flattenedItems, firstTodayConvoId, moveToTop, toggleNav],
+    [cache, flattenedItems, moveToTop, toggleNav]
   );
 
-  const getRowHeight = useCallback(
-    ({ index }: { index: number }) => cache.getHeight(index, 0),
-    [cache],
-  );
-
-  const throttledLoadMore = useMemo(
-    () => throttle(loadMoreConversations, 300),
-    [loadMoreConversations],
-  );
-
+  // 其他列表配置（高度计算、加载更多等）
+  const getRowHeight = useCallback(({ index }: { index: number }) => cache.getHeight(index, 0), [cache]);
+  const throttledLoadMore = useMemo(() => throttle(loadMoreConversations, 300), [loadMoreConversations]);
   const handleRowsRendered = useCallback(
     ({ stopIndex }: { stopIndex: number }) => {
       if (stopIndex >= flattenedItems.length - 8) {
         throttledLoadMore();
       }
     },
-    [flattenedItems.length, throttledLoadMore],
+    [flattenedItems.length, throttledLoadMore]
   );
 
+  // 渲染列表
   return (
     <div className="relative flex h-full flex-col pb-2 text-sm text-text-primary">
       {isSearchLoading ? (
         <div className="flex flex-1 items-center justify-center">
           <Spinner className="text-text-primary" />
-          <span className="ml-2 text-text-primary">Loading...</span>
+          <span className="ml-2">搜索中...</span>
         </div>
       ) : (
-        <div className="flex-1">
-          <AutoSizer>
-            {({ width, height }) => (
-              <List
-                ref={containerRef as React.RefObject<List>}
-                width={width}
-                height={height}
-                deferredMeasurementCache={cache}
-                rowCount={flattenedItems.length}
-                rowHeight={getRowHeight}
-                rowRenderer={rowRenderer}
-                overscanRowCount={10}
-                className="outline-none"
-                style={{ outline: 'none' }}
-                role="list"
-                aria-label="Conversations"
-                onRowsRendered={handleRowsRendered}
-                tabIndex={-1}
-              />
-            )}
-          </AutoSizer>
-        </div>
+        <AutoSizer>
+          {({ width, height }) => (
+            <List
+              ref={containerRef as React.RefObject<List>}
+              width={width}
+              height={height}
+              deferredMeasurementCache={cache}
+              rowCount={flattenedItems.length}
+              rowHeight={getRowHeight}
+              rowRenderer={rowRenderer}
+              overscanRowCount={10}
+              className="outline-none"
+              onRowsRendered={handleRowsRendered}
+            />
+          )}
+        </AutoSizer>
       )}
     </div>
   );
-};
-
-export default memo(Conversations);
+});
