@@ -1,3 +1,4 @@
+
 import React, { useCallback, useState } from 'react';
 import { useRecoilValue } from 'recoil';
 import { useNavigate, Link } from 'react-router-dom';
@@ -29,7 +30,7 @@ export default function NewChat({
   const navigate = useNavigate();
   const localize = useLocalize();
   const { conversation } = store.useCreateConversationAtom(index);
-  const [isOperationOpen, setIsOperationOpen] = useState(true); 
+  const [isOperationOpen, setIsOperationOpen] = useState(true); // 控制运维服务子级展开/折叠
 
   const clickHandler: React.MouseEventHandler<HTMLButtonElement> = useCallback(
     (e) => {
@@ -53,7 +54,9 @@ export default function NewChat({
 
   return (
     <>
+      {/* 核心功能区：所有同级按钮+运维服务子级 */}
       <div className="mb-4 border-b border-border-light pb-3">
+        {/* 1. 关闭侧边栏按钮（独立功能，不参与系统功能同级） */}
         <div className="mb-3">
           <TooltipAnchor
             description={localize('com_nav_close_sidebar')}
@@ -73,6 +76,8 @@ export default function NewChat({
           />
         </div>
 
+        {/* 2. 同级系统功能按钮（共5个，运维服务在最后） */}
+        {/* 2.1 系统首页 */}
         <div className="mb-2">
           <TooltipAnchor
             description={localize('com_system_home')}
@@ -91,6 +96,7 @@ export default function NewChat({
           />
         </div>
 
+        {/* 2.2 风冷系统 */}
         <div className="mb-2">
           <TooltipAnchor
             description={localize('com_system_cooling')}
@@ -109,6 +115,7 @@ export default function NewChat({
           />
         </div>
 
+        {/* 2.3 根因分析 */}
         <div className="mb-2">
           <TooltipAnchor
             description={localize('com_system_root_cause')}
@@ -127,6 +134,7 @@ export default function NewChat({
           />
         </div>
 
+        {/* 2.4 作业查询 */}
         <div className="mb-2">
           <TooltipAnchor
             description={localize('com_system_job_query')}
@@ -145,6 +153,7 @@ export default function NewChat({
           />
         </div>
 
+        {/* 2.5 运维服务（同级最后一个，带展开/折叠） */}
         <div className="mb-2">
           <TooltipAnchor
             description={localize('com_system_operation')}
@@ -152,9 +161,10 @@ export default function NewChat({
               <Button
                 variant="outline"
                 className="w-full justify-start border-none bg-transparent hover:bg-surface-hover"
-                onClick={() => setIsOperationOpen(!isOperationOpen)}
+                onClick={() => setIsOperationOpen(!isOperationOpen)} // 切换子级显示状态
               >
                 <div className="flex items-center w-full">
+                  {/* 展开/折叠标识（用文字替代图标，避免依赖问题） */}
                   <span className="mr-2 text-sm">
                     {isOperationOpen ? '▼' : '▶'}
                   </span>
@@ -166,8 +176,10 @@ export default function NewChat({
           />
         </div>
 
+        {/* 3. 运维服务子级（下一级：创建新聊天 + 历史会话区域） */}
         {isOperationOpen && (
           <div className="ml-6 space-y-3 mt-1">
+            {/* 3.1 创建新聊天（运维服务子级1） */}
             <TooltipAnchor
               description={localize('com_ui_new_chat')}
               render={
@@ -184,12 +196,14 @@ export default function NewChat({
               }
             />
 
-            {/* 迁移历史会话到运维服务子级 */}
+            {/* 3.2 原本的历史会话区域（运维服务子级2） */}
             <div className="pt-2 border-t border-border-light">
+              {/* 历史会话标题（可选，增强视觉区分） */}
               <div className="mb-2 text-xs text-text-secondary">
+                {localize('com_history_conversations') || '历史会话'}
               </div>
-              {/* 直接渲染原本的历史会话内容，包括“今天”及下方内容 */}
-              {subHeaders}
+              {/* 原有历史会话内容（subHeaders 传入的内容） */}
+              {subHeaders != null ? subHeaders : null}
             </div>
           </div>
         )}
