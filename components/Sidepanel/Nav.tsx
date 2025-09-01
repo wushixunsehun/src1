@@ -22,6 +22,9 @@ function NavContent({ links, isCollapsed, resize }: Omit<NavProps, 'defaultActiv
               <div className="flex h-full w-full flex-col gap-1 px-3 py-2.5 group-[[data-collapsed=true]]:items-center group-[[data-collapsed=true]]:justify-center group-[[data-collapsed=true]]:px-2">
                 {links.map((link, index) => {
                   const variant = getVariant(link);
+                  // 判断是否为System按钮（通过id识别）
+                  const isSystemLink = link.id === 'system-sidebar-btn';
+                  
                   return isCollapsed ? (
                     <TooltipAnchor
                       description={localize(link.title)}
@@ -31,6 +34,10 @@ function NavContent({ links, isCollapsed, resize }: Omit<NavProps, 'defaultActiv
                         <Button
                           variant="ghost"
                           size="icon"
+                          // 为System按钮添加长方形样式
+                          className={cn({
+                            "rounded-none w-8": isSystemLink
+                          })}
                           onClick={(e) => {
                             if (link.onClick) {
                               link.onClick(e);
@@ -60,7 +67,11 @@ function NavContent({ links, isCollapsed, resize }: Omit<NavProps, 'defaultActiv
                             <Button
                               variant="outline"
                               size="sm"
-                              className="w-full justify-start bg-transparent text-text-secondary data-[state=open]:bg-surface-secondary data-[state=open]:text-text-primary"
+                              // 为System按钮添加长方形样式
+                              className={cn(
+                                "w-full justify-start bg-transparent text-text-secondary data-[state=open]:bg-surface-secondary data-[state=open]:text-text-primary",
+                                { "rounded-none": isSystemLink }
+                              )}
                               onClick={(e) => {
                                 if (link.onClick) {
                                   link.onClick(e);
