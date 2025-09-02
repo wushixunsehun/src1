@@ -74,6 +74,12 @@ export default function NewChat({
           />
         </div>
 
+        {/* 新增标题和分割线 */}
+        <div className="mb-4">
+          <h2 className="text-xl font-bold text-text-primary mb-2">NSCC</h2>
+          <div className="w-full h-px bg-border-light"></div>
+        </div>
+
         {/* 2.1 系统首页 */}
         <div className="mb-2">
           <TooltipAnchor
@@ -84,7 +90,7 @@ export default function NewChat({
                 className="w-full justify-start border-none bg-transparent hover:bg-surface-hover py-3"
                 onClick={() => isSmallScreen && toggleNav()}
               >
-                <Link to="/system" className="flex items-center w-full no-underline text-text-primary">
+                <Link to="/c/system" className="flex items-center w-full no-underline text-text-primary">
                   <Home size={20} className="mr-3" />
                   <span className="text-base font-bold">{localize('com_system_home')}</span>
                 </Link>
@@ -103,7 +109,7 @@ export default function NewChat({
                 className="w-full justify-start border-none bg-transparent hover:bg-surface-hover py-3"
                 onClick={() => isSmallScreen && toggleNav()}
               >
-                <Link to="/system/cooling-system" className="flex items-center w-full no-underline text-text-primary">
+                <Link to="/c/cooling-system" className="flex items-center w-full no-underline text-text-primary">
                   <Snowflake size={20} className="mr-3" />
                   <span className="text-base font-bold">{localize('com_system_cooling')}</span>
                 </Link>
@@ -122,7 +128,7 @@ export default function NewChat({
                 className="w-full justify-start border-none bg-transparent hover:bg-surface-hover py-3"
                 onClick={() => isSmallScreen && toggleNav()}
               >
-                <Link to="/system/root-cause" className="flex items-center w-full no-underline text-text-primary">
+                <Link to="/c/root-cause" className="flex items-center w-full no-underline text-text-primary">
                   <Search size={20} className="mr-3" />
                   <span className="text-base font-bold">{localize('com_system_root_cause')}</span>
                 </Link>
@@ -141,7 +147,7 @@ export default function NewChat({
                 className="w-full justify-start border-none bg-transparent hover:bg-surface-hover py-3"
                 onClick={() => isSmallScreen && toggleNav()}
               >
-                <Link to="/system/job-query" className="flex items-center w-full no-underline text-text-primary">
+                <Link to="/c/job-query" className="flex items-center w-full no-underline text-text-primary">
                   <List size={20} className="mr-3" />
                   <span className="text-base font-bold">{localize('com_system_job_query')}</span>
                 </Link>
@@ -176,7 +182,7 @@ export default function NewChat({
 
         {/* 3. 运维服务子级 */}
         {isOperationOpen && (
-          <div className="space-y-3 mt-1"> {/* 移除 ml-6 取消缩进 */}
+          <div className="space-y-3 mt-1">
             {/* 3.1 创建新聊天 */}
             <TooltipAnchor
               description={localize('com_ui_new_chat')}
