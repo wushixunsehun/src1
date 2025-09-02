@@ -1,3 +1,4 @@
+
 import { createBrowserRouter, Navigate, Outlet } from 'react-router-dom';
 import {
   Login,
@@ -19,6 +20,10 @@ import ShareRoute from './ShareRoute';
 import ChatRoute from './ChatRoute';
 import Search from './Search';
 import Root from './Root';
+import SystemHome from './Systemhome';
+import CoolingSystem from './CoolingSystem';
+import RootCause from './RootCause';
+import JobQuery from './JobQuery';
 
 const AuthLayout = () => (
   <AuthContextProvider>
@@ -96,7 +101,23 @@ export const router = createBrowserRouter([
         children: [
           {
             index: true,
-            element: <Navigate to="/c/new" replace={true} />,
+            element: <Navigate to="/c/system" replace={true} />,
+          },
+          {
+            path: 'c/system',
+            element: <SystemHome />,
+          },
+          {
+            path: 'c/cooling-system',
+            element: <CoolingSystem />,
+          },
+          {
+            path: 'c/root-cause',
+            element: <RootCause />,
+          },
+          {
+            path: 'c/job-query',
+            element: <JobQuery />,
           },
           {
             path: 'c/:conversationId?',
