@@ -1,16 +1,21 @@
 import React, { useCallback, useState, useRef, useEffect } from 'react';
-import { useRecoilValue } from 'recoil';
+import { useRecoilValue, useSetRecoilState } from 'recoil';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
-import { useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
+import { useQueryClient, useInfiniteQuery, type InfiniteData } from '@tanstack/react-query';
 import { QueryKeys, Constants, TConversation, ConversationListParams } from 'librechat-data-provider';
 import type { TMessage, ConversationListResponse } from 'librechat-data-provider';
 import { NewChatIcon, MobileSidebar, Sidebar, Spinner } from '~/components/svg';
-import { TooltipAnchor, Button } from '~/components/ui';
+import { TooltipAnchor, Button, Dialog, DialogContent, DialogHeader, DialogTitle } from '~/components/ui';
 import { useLocalize, useNewConvo, useNavigateToConvo } from '~/hooks';
+import { useDeleteConversationMutation } from '~/data-provider';
+import { NotificationSeverity } from '~/common';
+import { useToastContext } from '~/Providers';
 import store from '~/store';
-import { Home, Server, Snowflake, Search, List, Menu, MessageSquare, ChevronDown } from 'lucide-react';
+import { Home, Server, Snowflake, Search, List, Menu, MessageSquare, ChevronDown, TrashIcon } from 'lucide-react';
 import { cn } from '~/utils';
 import { useConversationsInfiniteQuery } from '~/data-provider/queries';
+import { updateConvoFieldsInfinite } from '~/utils/convos';
+import type { ConversationCursorData } from '~/utils/convos'; // 从本地工具导入
 
 export default function NewChat({
   index = 0,
@@ -40,6 +45,10 @@ export default function NewChat({
   const location = useLocation();
   const conversationsContainerRef = useRef<HTMLDivElement>(null);
   const currentConvoId = location.pathname.split('/')[2];
+  const { showToast } = useToastContext();
+  const deleteMutation = useDeleteConversationMutation();
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [convoToDelete, setConvoToDelete] = useState<TConversation | null>(null);
 
   const queryParams: ConversationListParams = {
     isArchived: false,
@@ -83,6 +92,50 @@ export default function NewChat({
       } finally {
         setIsLoadingMore(false);
       }
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!convoToDelete?.conversationId) return;
+
+    try {
+      await deleteMutation.mutateAsync({
+        conversationId: convoToDelete.conversationId
+      });
+      
+      // 更新本地缓存 - 修正类型导入
+      const conversationsData = queryClient.getQueryData<InfiniteData<ConversationCursorData>>(
+        [QueryKeys.conversation, queryParams]
+      );
+      
+      if (conversationsData) {
+        const updatedData = updateConvoFieldsInfinite(
+          conversationsData,
+          { conversationId: convoToDelete.conversationId },
+          true
+        );
+        queryClient.setQueryData([QueryKeys.conversation, queryParams], updatedData);
+      }
+      
+      // 如果删除的是当前对话，导航到新对话
+      if (currentConvoId === convoToDelete.conversationId) {
+        navigate('/c/new', { replace: true });
+      }
+      
+      showToast({
+        message: localize('删除成功'),
+        severity: NotificationSeverity.SUCCESS,
+        showIcon: true,
+      });
+    } catch (error) {
+      showToast({
+        message: localize('com_ui_convo_delete_error'),
+        severity: NotificationSeverity.ERROR,
+        showIcon: true,
+      });
+    } finally {
+      setShowDeleteDialog(false);
+      setConvoToDelete(null);
     }
   };
 
@@ -314,10 +367,23 @@ export default function NewChat({
                     onClick={() => handleConversationClick(convo)}
                     aria-current={currentConvoId === convo.conversationId ? "page" : undefined}
                   >
-                    <MessageSquare className="icon-lg text-text-primary mr-2 h-3 w-3" />
-                    <span className="text-xs truncate max-w-[200px]">
-                      {convo.title || localize('com_ui_untitled_conversation')}
-                    </span>
+                    <div className="flex items-center w-full">
+                      <MessageSquare className="icon-lg text-text-primary mr-2 h-3 w-3" />
+                      <span className="text-xs truncate max-w-[200px]">
+                        {convo.title || localize('com_ui_untitled_conversation')}
+                      </span>
+                      <button
+                        className="ml-auto p-1 text-text-secondary hover:text-red-500 transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setConvoToDelete(convo);
+                          setShowDeleteDialog(true);
+                        }}
+                        aria-label={localize('com_ui_delete_conversation')}
+                      >
+                        <TrashIcon size={14} />
+                      </button>
+                    </div>
                   </Button>
                 ))
               ) : (
@@ -350,6 +416,34 @@ export default function NewChat({
           </div>
         )}
       </div>
+
+      {/* 删除确认对话框 */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{localize('com_ui_delete_conversation')}</DialogTitle>
+          </DialogHeader>
+          <div>
+            {localize('com_ui_delete_confirm')} 
+            <strong>{convoToDelete?.title || localize('com_ui_untitled_conversation')}</strong>?
+          </div>
+          <div className="flex justify-end gap-4 pt-4">
+            <Button 
+              variant="outline" 
+              onClick={() => setShowDeleteDialog(false)}
+            >
+              {localize('com_ui_cancel')}
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={handleConfirmDelete}
+              disabled={deleteMutation.isLoading}
+            >
+              {deleteMutation.isLoading ? <Spinner size={16} /> : localize('com_ui_delete')}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
