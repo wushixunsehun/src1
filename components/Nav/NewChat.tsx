@@ -1,16 +1,16 @@
-
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useRef, useEffect } from 'react';
 import { useRecoilValue } from 'recoil';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
-import { useQueryClient } from '@tanstack/react-query';
-import { QueryKeys, Constants } from 'librechat-data-provider';
-import type { TMessage } from 'librechat-data-provider';
-import { NewChatIcon, MobileSidebar, Sidebar } from '~/components/svg';
+import { useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
+import { QueryKeys, Constants, TConversation, ConversationListParams } from 'librechat-data-provider';
+import type { TMessage, ConversationListResponse } from 'librechat-data-provider';
+import { NewChatIcon, MobileSidebar, Sidebar, Spinner } from '~/components/svg';
 import { TooltipAnchor, Button } from '~/components/ui';
-import { useLocalize, useNewConvo } from '~/hooks';
+import { useLocalize, useNewConvo, useNavigateToConvo } from '~/hooks';
 import store from '~/store';
-import { Home, Server, Snowflake, Search, List, Menu } from 'lucide-react'; // 使用lucide的Menu图标
+import { Home, Server, Snowflake, Search, List, Menu, MessageSquare, ChevronDown } from 'lucide-react';
 import { cn } from '~/utils';
+import { useConversationsInfiniteQuery } from '~/data-provider/queries';
 
 export default function NewChat({
   index = 0,
@@ -18,24 +18,41 @@ export default function NewChat({
   subHeaders,
   isSmallScreen,
   headerButtons,
-  navVisible, // 从props接收导航状态
-  setNavVisible, // 从props接收状态更新方法
+  navVisible,
+  setNavVisible,
 }: {
   index?: number;
   toggleNav: () => void;
   isSmallScreen?: boolean;
   subHeaders?: React.ReactNode;
   headerButtons?: React.ReactNode;
-  navVisible: boolean; // 新增：导航可见性状态
-  setNavVisible: React.Dispatch<React.SetStateAction<boolean>>; // 新增：更新导航状态的方法
+  navVisible: boolean;
+  setNavVisible: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
   const queryClient = useQueryClient();
   const { newConversation: newConvo } = useNewConvo(index);
+  const { navigateToConvo } = useNavigateToConvo(index);
   const navigate = useNavigate();
   const localize = useLocalize();
   const { conversation } = store.useCreateConversationAtom(index);
   const [isOperationOpen, setIsOperationOpen] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const location = useLocation();
+  const conversationsContainerRef = useRef<HTMLDivElement>(null);
+  const currentConvoId = location.pathname.split('/')[2];
+
+  // 配置对话列表查询参数（非归档对话）
+  const queryParams: ConversationListParams = {
+    isArchived: false,
+    sortBy: 'updatedAt',
+    sortDirection: 'desc',
+  };
+
+  // 使用无限查询钩子获取对话列表
+  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useConversationsInfiniteQuery(queryParams);
+
+  // 提取所有页面的对话数据
+  const conversations = data?.pages.flatMap(page => page.conversations) || [];
 
   // 定义需要显示打开按钮的页面路由
   const targetRoutes = [
@@ -52,6 +69,47 @@ export default function NewChat({
     setNavVisible(true);
   };
 
+  // 切换到指定对话
+  const handleConversationClick = (conversation: TConversation) => {
+    navigateToConvo(conversation, {
+      resetLatestMessage: true,
+      currentConvoId: currentConvoId,
+    });
+    if (isSmallScreen) {
+      toggleNav();
+      setNavVisible(false);
+    }
+  };
+
+  // 加载更多对话
+  const handleLoadMore = async () => {
+    if (hasNextPage && !isFetchingNextPage) {
+      setIsLoadingMore(true);
+      try {
+        await fetchNextPage();
+      } finally {
+        setIsLoadingMore(false);
+      }
+    }
+  };
+
+  // 监听滚动，实现无限滚动加载
+  useEffect(() => {
+    const container = conversationsContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      // 当滚动到距离底部200px时加载更多
+      if (scrollHeight - scrollTop - clientHeight < 200 && hasNextPage && !isFetchingNextPage) {
+        fetchNextPage();
+      }
+    };
+
+    container.addEventListener('scroll', handleScroll);
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
   const clickHandler: React.MouseEventHandler<HTMLButtonElement> = useCallback(
     (e) => {
       if (e.button === 0 && (e.ctrlKey || e.metaKey)) {
@@ -63,13 +121,12 @@ export default function NewChat({
         [],
       );
       queryClient.invalidateQueries([QueryKeys.messages]);
-      newConvo();
-      navigate('/c/new', { state: { focusChat: true } });
+      newConvo({ disableNavigation: isSmallScreen });
       if (isSmallScreen) {
         toggleNav();
       }
     },
-    [queryClient, conversation, newConvo, navigate, toggleNav, isSmallScreen],
+    [queryClient, conversation, newConvo, toggleNav, isSmallScreen],
   );
 
   return (
@@ -83,7 +140,7 @@ export default function NewChat({
           className="fixed top-4 left-4 z-50 md:hidden"
           onClick={handleOpenSidebar}
         >
-          <Menu size={20} /> {/* 使用lucide的Menu图标替代MenuIcon */}
+          <Menu size={20} />
         </Button>
       )}
 
@@ -124,7 +181,8 @@ export default function NewChat({
             render={
               <Button
                 variant="outline"
-                className="w-full justify-start border-none bg-transparent hover:bg-surface-hover py-3"
+                className={cn("w-full justify-start border-none bg-transparent hover:bg-surface-hover py-3", 
+                  location.pathname === '/c/system' ? 'bg-surface-active-alt' : '')}
                 onClick={() => {
                   if (isSmallScreen) toggleNav();
                   setNavVisible(false);
@@ -146,7 +204,8 @@ export default function NewChat({
             render={
               <Button
                 variant="outline"
-                className="w-full justify-start border-none bg-transparent hover:bg-surface-hover py-3"
+                className={cn("w-full justify-start border-none bg-transparent hover:bg-surface-hover py-3", 
+                  location.pathname === '/c/cooling-system' ? 'bg-surface-active-alt' : '')}
                 onClick={() => {
                   if (isSmallScreen) toggleNav();
                   setNavVisible(false);
@@ -168,7 +227,8 @@ export default function NewChat({
             render={
               <Button
                 variant="outline"
-                className="w-full justify-start border-none bg-transparent hover:bg-surface-hover py-3"
+                className={cn("w-full justify-start border-none bg-transparent hover:bg-surface-hover py-3", 
+                  location.pathname === '/c/root-cause' ? 'bg-surface-active-alt' : '')}
                 onClick={() => {
                   if (isSmallScreen) toggleNav();
                   setNavVisible(false);
@@ -190,7 +250,8 @@ export default function NewChat({
             render={
               <Button
                 variant="outline"
-                className="w-full justify-start border-none bg-transparent hover:bg-surface-hover py-3"
+                className={cn("w-full justify-start border-none bg-transparent hover:bg-surface-hover py-3", 
+                  location.pathname === '/c/job-query' ? 'bg-surface-active-alt' : '')}
                 onClick={() => {
                   if (isSmallScreen) toggleNav();
                   setNavVisible(false);
@@ -214,15 +275,17 @@ export default function NewChat({
                 variant="outline"
                 className="w-full justify-start border-none bg-transparent hover:bg-surface-hover py-3"
                 onClick={() => setIsOperationOpen(!isOperationOpen)}
+                aria-expanded={isOperationOpen}
               >
                 <div className="flex items-center justify-between w-full">
                   <div className="flex items-center">
                     <Server size={20} className="mr-3" />
                     <span className="text-base font-bold">{localize('com_system_operation')}</span>
                   </div>
-                  <span className="text-base">
-                    {isOperationOpen ? '▼' : '▶'}
-                  </span>
+                  <ChevronDown 
+                    size={16} 
+                    className={cn("transition-transform duration-200", isOperationOpen ? "rotate-180" : "")} 
+                  />
                 </div>
               </Button>
             }
@@ -231,7 +294,11 @@ export default function NewChat({
 
         {/* 3. 运维服务子级 */}
         {isOperationOpen && (
-          <div className="space-y-3 mt-1">
+          <div 
+            className="space-y-3 mt-1 pl-6 max-h-[400px] overflow-y-auto pr-2" 
+            ref={conversationsContainerRef}
+            aria-label={localize('com_ui_conversations_list')}
+          >
             {/* 3.1 创建新聊天 */}
             <TooltipAnchor
               description={localize('com_ui_new_chat')}
@@ -248,9 +315,63 @@ export default function NewChat({
                 </Button>
               }
             />
+
+            {/* 3.2 历史对话列表 */}
+            <div className="mt-2 border-t border-border-light pt-2">
+              {isLoading && conversations.length === 0 ? (
+                <div className="flex justify-center py-4">
+                  <Spinner size={16} />
+                  <span className="ml-2 text-sm text-text-secondary">{localize('com_ui_loading_conversations')}</span>
+                </div>
+              ) : conversations.length > 0 ? (
+                conversations.map((convo) => (
+                  <Button
+                    key={convo.conversationId}
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start border-none bg-transparent hover:bg-surface-hover py-2 text-left",
+                      currentConvoId === convo.conversationId ? "bg-surface-active-alt" : ""
+                    )}
+                    onClick={() => handleConversationClick(convo)}
+                    aria-current={currentConvoId === convo.conversationId ? "page" : undefined}
+                  >
+                    <MessageSquare className="icon-lg text-text-primary mr-2 h-4 w-4" />
+                    <span className="text-sm truncate max-w-[200px]">
+                      {convo.title || localize('com_ui_untitled_conversation')}
+                    </span>
+                  </Button>
+                ))
+              ) : (
+                <div className="text-sm text-text-secondary px-4 py-4 text-center">
+                  {localize('com_ui_no_conversations')}
+                </div>
+              )}
+
+              {/* 加载更多指示器和按钮 */}
+              {(hasNextPage || isFetchingNextPage) && conversations.length > 0 && (
+                <div className="flex justify-center py-2 mt-2">
+                  {isFetchingNextPage ? (
+                    <>
+                      <Spinner size={16} />
+                      <span className="ml-2 text-xs text-text-secondary">{localize('com_ui_loading_more')}</span>
+                    </>
+                  ) : (
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-center text-xs text-text-secondary"
+                      onClick={handleLoadMore}
+                      disabled={isLoadingMore}
+                    >
+                      <ChevronDown size={14} className="mr-1" />
+                      {localize('com_ui_load_more')}
+                    </Button>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
     </>
   );
-}
+} 
