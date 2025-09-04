@@ -6,7 +6,7 @@ import { TConversation } from 'librechat-data-provider';
 import { Spinner } from '~/components/svg';
 import Convo from './Convo';
 
-// 定义列表项类型（仅保留会话和加载状态，移除header）
+// 定义列表项类型
 type FlattenedItem =
   | { type: 'convo'; convo: TConversation }
   | { type: 'loading' };
@@ -57,26 +57,19 @@ export const Conversations = memo(({
   const isSmallScreen = useMediaQuery('(max-width: 768px)');
   const convoHeight = isSmallScreen ? 44 : 34;
 
-  // 过滤有效会话（去除null值）
   const filteredConversations = useMemo(
     () => rawConversations.filter(Boolean) as TConversation[],
     [rawConversations]
   );
 
-  // 生成扁平化列表（直接添加所有会话，无时间分组）
+
   const flattenedItems = useMemo(() => {
     const items: FlattenedItem[] = [];
-    // 直接推送所有会话，不分组
-    items.push(...filteredConversations.map(convo => ({ 
-      type: 'convo' as const, 
-      convo 
-    })));
-    // 添加加载状态项（如果需要）
     if (isLoading) {
       items.push({ type: 'loading' as const });
     }
     return items;
-  }, [filteredConversations, isLoading]);
+  }, [isLoading]);
 
   // 列表项高度缓存配置
   const cache = useMemo(
@@ -98,7 +91,7 @@ export const Conversations = memo(({
     [flattenedItems, convoHeight]
   );
 
-  // 渲染列表项（仅处理会话和加载状态）
+  // 渲染列表项
   const rowRenderer = useCallback(
     ({ index, key, parent, style }) => {
       const item = flattenedItems[index];
@@ -125,7 +118,7 @@ export const Conversations = memo(({
                   conversation={item.convo}
                   retainView={moveToTop}
                   toggleNav={toggleNav}
-                  isLatestConvo={index === 0} // 第一个会话视为最新
+                  isLatestConvo={index === 0}
                 />
               )}
             </div>
@@ -136,7 +129,7 @@ export const Conversations = memo(({
     [cache, flattenedItems, moveToTop, toggleNav]
   );
 
-  // 其他列表配置（高度计算、加载更多等）
+  // 其他列表配置
   const getRowHeight = useCallback(({ index }: { index: number }) => cache.getHeight(index, 0), [cache]);
   const throttledLoadMore = useMemo(() => throttle(loadMoreConversations, 300), [loadMoreConversations]);
   const handleRowsRendered = useCallback(
@@ -148,7 +141,7 @@ export const Conversations = memo(({
     [flattenedItems.length, throttledLoadMore]
   );
 
-  // 渲染列表
+  // 渲染空列表（隐藏历史聊天记录）
   return (
     <div className="relative flex h-full flex-col pb-2 text-sm text-text-primary">
       {isSearchLoading ? (
