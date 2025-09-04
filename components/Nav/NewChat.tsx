@@ -41,20 +41,16 @@ export default function NewChat({
   const conversationsContainerRef = useRef<HTMLDivElement>(null);
   const currentConvoId = location.pathname.split('/')[2];
 
-  // 配置对话列表查询参数（非归档对话）
   const queryParams: ConversationListParams = {
     isArchived: false,
     sortBy: 'updatedAt',
     sortDirection: 'desc',
   };
 
-  // 使用无限查询钩子获取对话列表
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useConversationsInfiniteQuery(queryParams);
 
-  // 提取所有页面的对话数据
   const conversations = data?.pages.flatMap(page => page.conversations) || [];
 
-  // 定义需要显示打开按钮的页面路由
   const targetRoutes = [
     '/c/system',
     '/c/cooling-system',
@@ -64,12 +60,10 @@ export default function NewChat({
   ];
   const isTargetRoute = targetRoutes.includes(location.pathname);
 
-  // 点击打开侧边栏按钮
   const handleOpenSidebar = () => {
     setNavVisible(true);
   };
 
-  // 切换到指定对话
   const handleConversationClick = (conversation: TConversation) => {
     navigateToConvo(conversation, {
       resetLatestMessage: true,
@@ -81,7 +75,6 @@ export default function NewChat({
     }
   };
 
-  // 加载更多对话
   const handleLoadMore = async () => {
     if (hasNextPage && !isFetchingNextPage) {
       setIsLoadingMore(true);
@@ -93,14 +86,12 @@ export default function NewChat({
     }
   };
 
-  // 监听滚动，实现无限滚动加载
   useEffect(() => {
     const container = conversationsContainerRef.current;
     if (!container) return;
 
     const handleScroll = () => {
       const { scrollTop, scrollHeight, clientHeight } = container;
-      // 当滚动到距离底部200px时加载更多
       if (scrollHeight - scrollTop - clientHeight < 200 && hasNextPage && !isFetchingNextPage) {
         fetchNextPage();
       }
@@ -131,7 +122,6 @@ export default function NewChat({
 
   return (
     <>
-      {/* 打开侧边栏按钮（仅在目标页面且侧边栏折叠时显示） */}
       {!navVisible && isTargetRoute && (
         <Button
           variant="outline"
@@ -144,9 +134,7 @@ export default function NewChat({
         </Button>
       )}
 
-      {/* 核心功能区：所有同级按钮+运维服务子级 */}
       <div className="mb-4 border-b border-border-light pb-3">
-        {/* 1. 关闭侧边栏按钮 */}
         <div className="mb-3">
           <TooltipAnchor
             description={localize('com_nav_close_sidebar')}
@@ -161,20 +149,18 @@ export default function NewChat({
                   setNavVisible(false);
                 }}
               >
-                <Sidebar className="max-md:hidden mr-2 h-5 w-5" />
-                <MobileSidebar className="m-1 inline-flex size-10 items-center justify-center md:hidden mr-2" />
+                <Sidebar className="max-md:hidden mr-2 h-6 w-6" />
+                <MobileSidebar className="m-1 inline-flex size-12 items-center justify-center md:hidden mr-2" />
               </Button>
             }
           />
         </div>
 
-        {/* 新增标题和分割线 */}
         <div className="mb-4">
           <h2 className="text-xl font-bold text-text-primary mb-2">NSCC</h2>
           <div className="w-full h-px bg-border-light"></div>
         </div>
 
-        {/* 2.1 系统首页 */}
         <div className="mb-2">
           <TooltipAnchor
             description={localize('com_system_home')}
@@ -197,7 +183,6 @@ export default function NewChat({
           />
         </div>
 
-        {/* 2.2 风冷系统 */}
         <div className="mb-2">
           <TooltipAnchor
             description={localize('com_system_cooling')}
@@ -220,7 +205,6 @@ export default function NewChat({
           />
         </div>
 
-        {/* 2.3 根因分析 */}
         <div className="mb-2">
           <TooltipAnchor
             description={localize('com_system_root_cause')}
@@ -243,7 +227,6 @@ export default function NewChat({
           />
         </div>
 
-        {/* 2.4 作业查询 */}
         <div className="mb-2">
           <TooltipAnchor
             description={localize('com_system_job_query')}
@@ -266,7 +249,6 @@ export default function NewChat({
           />
         </div>
 
-        {/* 2.5 运维服务 */}
         <div className="mb-2">
           <TooltipAnchor
             description={localize('com_system_operation')}
@@ -292,14 +274,12 @@ export default function NewChat({
           />
         </div>
 
-        {/* 3. 运维服务子级 */}
         {isOperationOpen && (
           <div 
-            className="space-y-3 mt-1 pl-6 max-h-[400px] overflow-y-auto pr-2" 
+            className="space-y-1 mt-1 max-h-[400px] overflow-y-auto pr-2" 
             ref={conversationsContainerRef}
             aria-label={localize('com_ui_conversations_list')}
           >
-            {/* 3.1 创建新聊天 */}
             <TooltipAnchor
               description={localize('com_ui_new_chat')}
               render={
@@ -307,21 +287,20 @@ export default function NewChat({
                   variant="outline"
                   data-testid="nav-new-chat-button"
                   aria-label={localize('com_ui_new_chat')}
-                  className="w-full justify-start border-none bg-transparent hover:bg-surface-hover py-2" 
+                  className="w-full justify-start border-none bg-transparent hover:bg-surface-hover py-1.5" 
                   onClick={clickHandler}
                 >
-                  <NewChatIcon className="icon-lg text-text-primary mr-2 h-4 w-4" />
-                  <span className="text-sm">{localize('com_ui_new_chat')}</span> 
+                  <NewChatIcon className="icon-lg text-text-primary mr-2 h-3 w-3" />
+                  <span className="text-xs">{localize('com_ui_new_chat')}</span> 
                 </Button>
               }
             />
 
-            {/* 3.2 历史对话列表 */}
-            <div className="mt-2 border-t border-border-light pt-2">
+            <div className="mt-1 border-t border-border-light pt-1">
               {isLoading && conversations.length === 0 ? (
-                <div className="flex justify-center py-4">
-                  <Spinner size={16} />
-                  <span className="ml-2 text-sm text-text-secondary">{localize('com_ui_loading_conversations')}</span>
+                <div className="flex justify-center py-3">
+                  <Spinner size={14} />
+                  <span className="ml-2 text-xs text-text-secondary">{localize('com_ui_loading_conversations')}</span>
                 </div>
               ) : conversations.length > 0 ? (
                 conversations.map((convo) => (
@@ -329,40 +308,39 @@ export default function NewChat({
                     key={convo.conversationId}
                     variant="outline"
                     className={cn(
-                      "w-full justify-start border-none bg-transparent hover:bg-surface-hover py-2 text-left",
+                      "w-full justify-start border-none bg-transparent hover:bg-surface-hover py-1.5 text-left",
                       currentConvoId === convo.conversationId ? "bg-surface-active-alt" : ""
                     )}
                     onClick={() => handleConversationClick(convo)}
                     aria-current={currentConvoId === convo.conversationId ? "page" : undefined}
                   >
-                    <MessageSquare className="icon-lg text-text-primary mr-2 h-4 w-4" />
-                    <span className="text-sm truncate max-w-[200px]">
+                    <MessageSquare className="icon-lg text-text-primary mr-2 h-3 w-3" />
+                    <span className="text-xs truncate max-w-[200px]">
                       {convo.title || localize('com_ui_untitled_conversation')}
                     </span>
                   </Button>
                 ))
               ) : (
-                <div className="text-sm text-text-secondary px-4 py-4 text-center">
+                <div className="text-xs text-text-secondary px-4 py-3 text-center">
                   {localize('com_ui_no_conversations')}
                 </div>
               )}
 
-              {/* 加载更多指示器和按钮 */}
               {(hasNextPage || isFetchingNextPage) && conversations.length > 0 && (
-                <div className="flex justify-center py-2 mt-2">
+                <div className="flex justify-center py-1 mt-1">
                   {isFetchingNextPage ? (
                     <>
-                      <Spinner size={16} />
-                      <span className="ml-2 text-xs text-text-secondary">{localize('com_ui_loading_more')}</span>
+                      <Spinner size={14} />
+                      <span className="ml-2 text-[10px] text-text-secondary">{localize('com_ui_loading_more')}</span>
                     </>
                   ) : (
                     <Button
                       variant="ghost"
-                      className="w-full justify-center text-xs text-text-secondary"
+                      className="w-full justify-center text-[10px] text-text-secondary"
                       onClick={handleLoadMore}
                       disabled={isLoadingMore}
                     >
-                      <ChevronDown size={14} className="mr-1" />
+                      <ChevronDown size={12} className="mr-1" />
                       {localize('com_ui_load_more')}
                     </Button>
                   )}
@@ -374,4 +352,4 @@ export default function NewChat({
       </div>
     </>
   );
-} 
+}
