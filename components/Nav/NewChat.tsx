@@ -418,32 +418,34 @@ export default function NewChat({
       </div>
 
       {/* 删除确认对话框 */}
-      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{localize('com_ui_delete_conversation')}</DialogTitle>
-          </DialogHeader>
-          <div>
-            {localize('com_ui_delete_confirm')} 
-            <strong>{convoToDelete?.title || localize('com_ui_untitled_conversation')}</strong>?
-          </div>
-          <div className="flex justify-end gap-4 pt-4">
-            <Button 
-              variant="outline" 
-              onClick={() => setShowDeleteDialog(false)}
-            >
-              {localize('com_ui_cancel')}
-            </Button>
-            <Button 
-              variant="destructive" 
-              onClick={handleConfirmDelete}
-              disabled={deleteMutation.isLoading}
-            >
-              {deleteMutation.isLoading ? <Spinner size={16} /> : localize('com_ui_delete')}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </>
-  );
+        <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+            <DialogContent className="w-11/12 max-w-md md:max-w-md p-6">
+        <DialogHeader>
+      <DialogTitle className="text-lg font-semibold">{localize('com_ui_delete_conversation')}</DialogTitle>
+    </DialogHeader>
+    <div className="mt-4 text-base">
+      &nbsp;{localize('是否删除')} 
+      <strong>{convoToDelete?.title || localize('com_ui_untitled_conversation')}</strong>
+    </div>
+    <div className="flex justify-end gap-6 pt-6 pb-2">
+      <Button 
+        variant="outline" 
+        onClick={() => setShowDeleteDialog(false)}
+        className="ml-auto px-5 py-2" 
+      >
+        {localize('com_ui_cancel')}
+      </Button>
+      <Button 
+        variant="destructive" 
+        onClick={handleConfirmDelete}
+        disabled={deleteMutation.isLoading}
+        className="px-5 py-2"  
+      >
+        {deleteMutation.isLoading ? <Spinner size={16} /> : localize('com_ui_delete')}
+      </Button>
+    </div>
+  </DialogContent>
+</Dialog>
+</>
+);
 }
