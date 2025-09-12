@@ -43,6 +43,11 @@ const SidePanel = ({
   panelRef: React.RefObject<ImperativePanelHandle>;
   interfaceConfig: TInterfaceConfig;
 }) => {
+  // 强制隐藏侧边栏：直接返回空内容
+  return null;
+
+  // 以下为原代码（已注释，实际不会执行）
+  /*
   const localize = useLocalize();
   const { endpoint } = useSidePanelContext();
   const [isHovering, setIsHovering] = useState(false);
@@ -186,6 +191,7 @@ const SidePanel = ({
       </ResizablePanel>
     </>
   );
+  */
 };
 
 export default memo(SidePanel);
