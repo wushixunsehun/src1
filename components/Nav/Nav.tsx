@@ -230,6 +230,8 @@ const Nav = memo(
                         toggleNav={toggleNavVisible}
                         headerButtons={headerButtons}
                         isSmallScreen={isSmallScreen}
+                        navVisible={navVisible}  
+                        setNavVisible={setNavVisible}  
                       />
                       <Conversations
                         conversations={conversations}
