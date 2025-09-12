@@ -19,26 +19,28 @@ export const BookmarkMenuItems: FC<{
     <BookmarkItems
       tags={tags}
       handleSubmit={handleSubmit}
-      header={
-        <BookmarkEditDialog
-          context="BookmarkMenu - BookmarkEditDialog"
-          conversationId={conversationId}
-          tags={tags}
-          setTags={setTags}
-          open={open}
-          setOpen={setOpen}
-        >
-          <OGDialogTrigger asChild>
-            <BookmarkItem
-              tag={localize('com_ui_bookmarks_new')}
-              data-testid="bookmark-item-new"
-              handleSubmit={handleToggleOpen}
-              selected={false}
-              icon={<BookmarkPlusIcon className="size-4" aria-label="Add Bookmark" />}
-            />
-          </OGDialogTrigger>
-        </BookmarkEditDialog>
-      }
+      // 注释掉"新建书签"按钮相关代码
+      // header={
+      //   <BookmarkEditDialog
+      //     context="BookmarkMenu - BookmarkEditDialog"
+      //     conversationId={conversationId}
+      //     tags={tags}
+      //     setTags={setTags}
+      //     open={open}
+      //     setOpen={setOpen}
+      //   >
+      //     <OGDialogTrigger asChild>
+      //       <BookmarkItem
+      //         tag={localize('com_ui_bookmarks_new')}
+      //         data-testid="bookmark-item-new"
+      //         handleSubmit={handleToggleOpen}
+      //         selected={false}
+      //         icon={<BookmarkPlusIcon className="size-4" aria-label="Add Bookmark" />}
+      //       />
+      //     </OGDialogTrigger>
+      //   </BookmarkEditDialog>
+      // }
+      header={null}
     />
   );
 };
