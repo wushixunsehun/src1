@@ -15,7 +15,7 @@ import { Home, Server, Snowflake, Search, List, Menu, MessageSquare, ChevronDown
 import { cn } from '~/utils';
 import { useConversationsInfiniteQuery } from '~/data-provider/queries';
 import { updateConvoFieldsInfinite } from '~/utils/convos';
-import type { ConversationCursorData } from '~/utils/convos'; // 从本地工具导入
+import type { ConversationCursorData } from '~/utils/convos';
 
 export default function NewChat({
   index = 0,
@@ -103,7 +103,6 @@ export default function NewChat({
         conversationId: convoToDelete.conversationId
       });
       
-      // 更新本地缓存 - 修正类型导入
       const conversationsData = queryClient.getQueryData<InfiniteData<ConversationCursorData>>(
         [QueryKeys.conversation, queryParams]
       );
@@ -117,7 +116,6 @@ export default function NewChat({
         queryClient.setQueryData([QueryKeys.conversation, queryParams], updatedData);
       }
       
-      // 如果删除的是当前对话，导航到新对话
       if (currentConvoId === convoToDelete.conversationId) {
         navigate('/c/new', { replace: true });
       }
@@ -175,18 +173,6 @@ export default function NewChat({
 
   return (
     <>
-      {!navVisible && isTargetRoute && (
-        <Button
-          variant="outline"
-          data-testid="open-sidebar-button"
-          aria-label={localize('com_nav_open_sidebar')}
-          className="fixed top-4 left-4 z-50 md:hidden"
-          onClick={handleOpenSidebar}
-        >
-          <Menu size={20} />
-        </Button>
-      )}
-
       <div className="mb-4 border-b border-border-light pb-3">
         <div className="mb-3">
           <TooltipAnchor
@@ -228,7 +214,7 @@ export default function NewChat({
                 }}
               >
                 <Link to="/c/system" className="flex items-center w-full no-underline text-text-primary">
-                  <Home size={20} className="mr-3" />
+                  <Home size={20} className="mr-3" strokeWidth={2.5} />
                   <span className="text-base font-bold">{localize('com_system_home')}</span>
                 </Link>
               </Button>
@@ -250,7 +236,7 @@ export default function NewChat({
                 }}
               >
                 <Link to="/c/cooling-system" className="flex items-center w-full no-underline text-text-primary">
-                  <Snowflake size={20} className="mr-3" />
+                  <Snowflake size={20} className="mr-3" strokeWidth={2.5} />
                   <span className="text-base font-bold">{localize('com_system_cooling')}</span>
                 </Link>
               </Button>
@@ -272,7 +258,7 @@ export default function NewChat({
                 }}
               >
                 <Link to="/c/root-cause" className="flex items-center w-full no-underline text-text-primary">
-                  <Search size={20} className="mr-3" />
+                  <Search size={20} className="mr-3" strokeWidth={2.5} />
                   <span className="text-base font-bold">{localize('com_system_root_cause')}</span>
                 </Link>
               </Button>
@@ -294,7 +280,7 @@ export default function NewChat({
                 }}
               >
                 <Link to="/c/job-query" className="flex items-center w-full no-underline text-text-primary">
-                  <List size={20} className="mr-3" />
+                  <List size={20} className="mr-3" strokeWidth={2.5} />
                   <span className="text-base font-bold">{localize('com_system_job_query')}</span>
                 </Link>
               </Button>
@@ -314,7 +300,7 @@ export default function NewChat({
               >
                 <div className="flex items-center justify-between w-full">
                   <div className="flex items-center">
-                    <Server size={20} className="mr-3" />
+                    <Server size={20} className="mr-3" strokeWidth={2.5} />
                     <span className="text-base font-bold">{localize('com_system_operation')}</span>
                   </div>
                   <ChevronDown 
@@ -343,7 +329,7 @@ export default function NewChat({
                   className="w-full justify-start border-none bg-transparent hover:bg-surface-hover py-1.5" 
                   onClick={clickHandler}
                 >
-                  <NewChatIcon className="icon-lg text-text-primary mr-2 h-3 w-3" />
+                  <NewChatIcon className="icon-lg text-text-primary mr-1 h-3.5 w-3.5" />
                   <span className="text-xs">{localize('com_ui_new_chat')}</span> 
                 </Button>
               }
@@ -368,7 +354,7 @@ export default function NewChat({
                     aria-current={currentConvoId === convo.conversationId ? "page" : undefined}
                   >
                     <div className="flex items-center w-full">
-                      <MessageSquare className="icon-lg text-text-primary mr-2 h-3 w-3" />
+                      <MessageSquare className="icon-lg text-text-primary mr-3 h-3.5 w-3.5" />
                       <span className="text-xs truncate max-w-[200px]">
                         {convo.title || localize('com_ui_untitled_conversation')}
                       </span>
@@ -417,7 +403,6 @@ export default function NewChat({
         )}
       </div>
 
-      {/* 删除确认对话框 */}
         <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
             <DialogContent className="w-11/12 max-w-md md:max-w-md p-6">
         <DialogHeader>
